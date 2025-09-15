@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCG Investor Pro - Pokemon Card Investment Analysis</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Professional Pokemon card investment analysis platform. Track ROI, monitor market trends, and make informed TCG investment decisions.">
+    <meta name="keywords" content="Pokemon cards, TCG investment, card trading, market analysis, ROI calculator">
+    <meta name="author" content="TCG Investor Pro">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="TCG Investor Pro - Pokemon Card Investment Analysis">
+    <meta property="og:description" content="Professional Pokemon card investment analysis platform. Track ROI, monitor market trends, and make informed TCG investment decisions.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tcginvestorpro.com">
+    <meta property="og:image" content="https://tcginvestorpro.com/og-image.jpg">
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="TCG Investor Pro - Pokemon Card Investment Analysis">
+    <meta name="twitter:description" content="Professional Pokemon card investment analysis platform. Track ROI, monitor market trends, and make informed TCG investment decisions.">
+    <meta name="twitter:image" content="https://tcginvestorpro.com/og-image.jpg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Environment Variables (Set by your hosting provider) -->
+    <script>
+        // These will be replaced by your hosting provider's environment variables
+        window.SUPABASE_URL = '%%SUPABASE_URL%%';
+        window.SUPABASE_ANON_KEY = '%%SUPABASE_ANON_KEY%%';
+        window.POKEMONTCG_API_KEY = '%%POKEMONTCG_API_KEY%%';
+        window.PRICECHARTING_API_KEY = '%%PRICECHARTING_API_KEY%%';
+        window.POKEMONPRICETRACKER_API_KEY = '%%POKEMONPRICETRACKER_API_KEY%%';
+    </script>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect width="32" height="32" rx="8" fill="#6366F1"/>
+                        <text x="16" y="22" text-anchor="middle" fill="white" font-size="16" font-weight="bold">TCG</text>
+                    </svg>
+                </div>
+                <span class="brand-name">TCG Investor Pro</span>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="#dashboard" class="nav-link active" data-section="dashboard">Dashboard</a></li>
+                <li><a href="#portfolio" class="nav-link" data-section="portfolio">Portfolio</a></li>
+                <li><a href="#watchlist" class="nav-link" data-section="watchlist">Watchlist</a></li>
+                <li><a href="#case-cracker" class="nav-link" data-section="case-cracker">Case Cracker</a></li>
+                <li><a href="#profile" class="nav-link" data-section="profile">Profile</a></li>
+            </ul>
+            
+            <div class="nav-actions">
+                <button class="btn-secondary">Sign In</button>
+                <button class="btn-primary">Get Premium</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <!-- Top Statistics Bar -->
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalCards">0</div>
+                        <div class="stat-label">Cards in Database</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="avgROI">0%</div>
+                        <div class="stat-label">Average ROI</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="avgProfit">$0</div>
+                        <div class="stat-label">Avg Profit/Card</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💎</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalMarketValue">$0</div>
+                        <div class="stat-label">Total Market Value</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="search-section">
+                <div class="search-header">
+                    <h2>Find Your Next Investment</h2>
+                    <p>Search through thousands of Pokemon cards with advanced filtering options</p>
+                </div>
+                
+                <div class="search-container">
+                    <div class="search-input-group">
+                        <input type="text" id="cardSearch" placeholder="Search cards by name, set, or number..." class="search-input">
+                        <button class="search-btn" id="searchBtn">🔍</button>
+                    </div>
+                    
+                    <div class="filter-panel" id="filterPanel">
+                        <div class="filter-group">
+                            <label>Set</label>
+                            <select id="setFilter">
+                                <option value="">All Sets</option>
+                                <option value="base-set">Base Set</option>
+                                <option value="jungle">Jungle</option>
+                                <option value="fossil">Fossil</option>
+                                <option value="team-rocket">Team Rocket</option>
+                                <option value="gym-challenge">Gym Challenge</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Card Type</label>
+                            <select id="typeFilter">
+                                <option value="">All Types</option>
+                                <option value="pokemon">Pokemon</option>
+                                <option value="trainer">Trainer</option>
+                                <option value="energy">Energy</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Rarity</label>
+                            <select id="rarityFilter">
+                                <option value="">All Rarities</option>
+                                <option value="common">Common</option>
+                                <option value="uncommon">Uncommon</option>
+                                <option value="rare">Rare</option>
+                                <option value="rare-holo">Rare Holo</option>
+                                <option value="rare-secret">Rare Secret</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Price Range</label>
+                            <div class="range-inputs">
+                                <input type="number" id="priceMin" placeholder="Min" min="0">
+                                <span>-</span>
+                                <input type="number" id="priceMax" placeholder="Max" min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>ROI Range</label>
+                            <div class="range-inputs">
+                                <input type="number" id="roiMin" placeholder="Min %" min="0">
+                                <span>-</span>
+                                <input type="number" id="roiMax" placeholder="Max %" min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Sort By</label>
+                            <select id="sortBy">
+                                <option value="price-desc">Price (High to Low)</option>
+                                <option value="price-asc">Price (Low to High)</option>
+                                <option value="roi-desc">ROI (High to Low)</option>
+                                <option value="roi-asc">ROI (Low to High)</option>
+                                <option value="name">Name (A-Z)</option>
+                                <option value="trending">Trending</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn-secondary filter-apply" id="applyFilters">Apply Filters</button>
+                        <button class="btn-outline filter-clear" id="clearFilters">Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Content -->
+            <div class="featured-content">
+                <div class="content-grid">
+                    <!-- Top Performing Sets -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>Top 10 Performing Sets</h3>
+                            <button class="btn-outline">View All</button>
+                        </div>
+                        <div class="sets-grid" id="topSetsGrid">
+                            <!-- Will be populated with JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Featured Cards -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>Featured Investment Opportunities</h3>
+                            <button class="btn-outline">View All</button>
+                        </div>
+                        <div class="cards-grid" id="featuredCardsGrid">
+                            <!-- Will be populated with JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Trends -->
+            <div class="trends-section">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3>Market Trends</h3>
+                        <div class="trend-controls">
+                            <button class="btn-outline active" data-period="7d">7D</button>
+                            <button class="btn-outline" data-period="30d">30D</button>
+                            <button class="btn-outline" data-period="90d">90D</button>
+                        </div>
+                    </div>
+                    <div class="trend-chart">
+                        <canvas id="trendChart" width="800" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Portfolio Section -->
+        <section id="portfolio" class="section">
+            <div class="section-header">
+                <h2>My Portfolio</h2>
+                <p>Track your Pokemon card investments and performance</p>
+            </div>
+            <div class="portfolio-content">
+                <div class="portfolio-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">$0</div>
+                        <div class="stat-label">Total Invested</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$0</div>
+                        <div class="stat-label">Current Value</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">0%</div>
+                        <div class="stat-label">Total ROI</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$0</div>
+                        <div class="stat-label">Total Profit</div>
+                    </div>
+                </div>
+                <div class="portfolio-actions">
+                    <button class="btn-primary">Add Card</button>
+                    <button class="btn-secondary">Import CSV</button>
+                    <button class="btn-outline">Export Portfolio</button>
+                </div>
+                <div class="portfolio-table">
+                    <table id="portfolioTable">
+                        <thead>
+                            <tr>
+                                <th>Card</th>
+                                <th>Purchase Price</th>
+                                <th>Current Value</th>
+                                <th>ROI</th>
+                                <th>Profit</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="empty-state">
+                                <td colspan="6">No cards in portfolio yet. Add some cards to start tracking!</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Watchlist Section -->
+        <section id="watchlist" class="section">
+            <div class="section-header">
+                <h2>My Watchlist</h2>
+                <p>Monitor cards you're interested in</p>
+            </div>
+            <div class="watchlist-content">
+                <div class="watchlist-actions">
+                    <button class="btn-primary">Add to Watchlist</button>
+                    <button class="btn-outline">Set Price Alert</button>
+                </div>
+                <div class="cards-grid" id="watchlistGrid">
+                    <div class="empty-state">
+                        <p>No cards in watchlist yet. Add some cards to start monitoring!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Case Cracker Section -->
+        <section id="case-cracker" class="section">
+            <div class="section-header">
+                <h2>Case Cracker Tool</h2>
+                <p>Calculate the expected value of booster boxes and cases</p>
+            </div>
+            <div class="case-cracker-content">
+                <div class="simulator-panel">
+                    <div class="input-group">
+                        <label>Select Product</label>
+                        <select id="productSelect">
+                            <option value="">Choose a product...</option>
+                            <option value="base-set-box">Base Set Booster Box</option>
+                            <option value="jungle-box">Jungle Booster Box</option>
+                            <option value="fossil-box">Fossil Booster Box</option>
+                            <option value="base-set-case">Base Set Case (12 boxes)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Purchase Price</label>
+                        <input type="number" id="purchasePrice" placeholder="Enter purchase price..." min="0" step="0.01">
+                    </div>
+                    <button class="btn-primary" id="calculateEV">Calculate Expected Value</button>
+                </div>
+                <div class="results-panel" id="evResults">
+                    <div class="results-header">
+                        <h3>Expected Value Analysis</h3>
+                    </div>
+                    <div class="results-content">
+                        <p>Select a product and enter purchase price to see expected value calculations.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile" class="section">
+            <div class="section-header">
+                <h2>Profile Settings</h2>
+                <p>Manage your account and preferences</p>
+            </div>
+            <div class="profile-content">
+                <div class="profile-tabs">
+                    <button class="tab-btn active" data-tab="account">Account</button>
+                    <button class="tab-btn" data-tab="subscription">Subscription</button>
+                    <button class="tab-btn" data-tab="alerts">Alerts</button>
+                    <button class="tab-btn" data-tab="api">API Keys</button>
+                </div>
+                <div class="profile-tab-content">
+                    <div id="account-tab" class="tab-panel active">
+                        <h3>Account Information</h3>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" placeholder="your@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Display Name</label>
+                            <input type="text" placeholder="Your Name">
+                        </div>
+                        <button class="btn-primary">Save Changes</button>
+                    </div>
+                    <div id="subscription-tab" class="tab-panel">
+                        <h3>Subscription Management</h3>
+                        <div class="subscription-info">
+                            <div class="plan-card">
+                                <h4>Free Plan</h4>
+                                <p>Limited to 5 searches per day</p>
+                                <button class="btn-primary">Upgrade to Premium</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="alerts-tab" class="tab-panel">
+                        <h3>Alert Preferences</h3>
+                        <div class="alert-settings">
+                            <div class="setting-item">
+                                <label>Email Notifications</label>
+                                <input type="checkbox" checked>
+                            </div>
+                            <div class="setting-item">
+                                <label>Price Drop Alerts</label>
+                                <input type="checkbox" checked>
+                            </div>
+                            <div class="setting-item">
+                                <label>New High Alerts</label>
+                                <input type="checkbox">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="api-tab" class="tab-panel">
+                        <h3>API Key Management</h3>
+                        <div class="api-info">
+                            <p>For advanced users: Connect your own API keys for enhanced data access.</p>
+                            <div class="form-group">
+                                <label>PriceCharting API Key</label>
+                                <input type="password" placeholder="Enter your API key">
+                            </div>
+                            <div class="form-group">
+                                <label>PokemonTCG.io API Key</label>
+                                <input type="password" placeholder="Enter your API key">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Card Detail Modal -->
+    <div id="cardDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalCardName">Card Name</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Card details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Google Analytics (Replace with your tracking ID) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+
+    <!-- Scripts -->
+    <script src="supabase-config-prod.js"></script>
+    <script src="api-services.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

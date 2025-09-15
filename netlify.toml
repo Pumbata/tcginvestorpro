@@ -1,0 +1,45 @@
+[build]
+  # No build command needed for static site
+  command = ""
+  publish = "."
+
+[build.environment]
+  # Environment variables will be set in Netlify dashboard
+  NODE_VERSION = "18"
+
+[[redirects]]
+  # Handle client-side routing
+  from = "/*"
+  to = "/index-prod.html"
+  status = 200
+
+[[headers]]
+  # Security headers
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.pokemontcg.io https://www.pricecharting.com https://api.pokemonpricetracker.com;"
+
+[[headers]]
+  # Cache static assets
+  for = "/styles.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/script.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
