@@ -976,6 +976,11 @@ function updateAuthUI(isSignedIn) {
                 document.querySelector('[data-section="portfolio"]').click();
             };
         }
+        
+        // Initialize portfolio if not already loaded
+        if (window.portfolioManager && !window.portfolioManager.PortfolioState?.isLoaded) {
+            window.portfolioManager.initializePortfolio();
+        }
     } else {
         if (signInBtn) {
             signInBtn.textContent = 'Sign In';

@@ -32,6 +32,7 @@
     
     <!-- Stylesheets -->
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="portfolio-styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Supabase -->
@@ -247,48 +248,114 @@
                 <h2>My Portfolio</h2>
                 <p>Track your Pokemon card investments and performance</p>
             </div>
-            <div class="portfolio-content">
-                <div class="portfolio-stats">
-                    <div class="stat-card">
-                        <div class="stat-value">$0</div>
+            
+            <!-- Portfolio Stats Dashboard -->
+            <div class="portfolio-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalInvested">$0</div>
                         <div class="stat-label">Total Invested</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value">$0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="currentValue">$0</div>
                         <div class="stat-label">Current Value</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalROI">0%</div>
                         <div class="stat-label">Total ROI</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value">$0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💎</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalProfit">$0</div>
                         <div class="stat-label">Total Profit</div>
                     </div>
                 </div>
-                <div class="portfolio-actions">
-                    <button class="btn-primary">Add Card</button>
-                    <button class="btn-secondary">Import CSV</button>
-                    <button class="btn-outline">Export Portfolio</button>
+            </div>
+
+            <!-- Portfolio Actions -->
+            <div class="portfolio-actions">
+                <button class="btn-primary" id="addCardBtn">+ Add Card</button>
+                <button class="btn-secondary" id="importCsvBtn">Import CSV</button>
+                <button class="btn-outline" id="exportPortfolioBtn">Export Portfolio</button>
+                <button class="btn-outline" id="refreshPortfolioBtn">🔄 Refresh</button>
+            </div>
+
+            <!-- Portfolio Filters -->
+            <div class="portfolio-filters">
+                <div class="filter-group">
+                    <label>Show:</label>
+                    <select id="portfolioFilter">
+                        <option value="all">All Cards</option>
+                        <option value="profit">Profitable Only</option>
+                        <option value="loss">Loss Only</option>
+                        <option value="ungraded">Ungraded</option>
+                        <option value="graded">Graded</option>
+                    </select>
                 </div>
-                <div class="portfolio-table">
-                    <table id="portfolioTable">
-                        <thead>
-                            <tr>
-                                <th>Card</th>
-                                <th>Purchase Price</th>
-                                <th>Current Value</th>
-                                <th>ROI</th>
-                                <th>Profit</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="empty-state">
-                                <td colspan="6">No cards in portfolio yet. Add some cards to start tracking!</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="filter-group">
+                    <label>Sort by:</label>
+                    <select id="portfolioSort">
+                        <option value="name">Name</option>
+                        <option value="purchase-date">Purchase Date</option>
+                        <option value="roi">ROI</option>
+                        <option value="profit">Profit</option>
+                        <option value="current-value">Current Value</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Portfolio Table -->
+            <div class="portfolio-table-container">
+                <table id="portfolioTable" class="portfolio-table">
+                    <thead>
+                        <tr>
+                            <th>Card</th>
+                            <th>Purchase Price</th>
+                            <th>Current Value</th>
+                            <th>ROI</th>
+                            <th>Profit</th>
+                            <th>Grading</th>
+                            <th>Purchase Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolioTableBody">
+                        <tr class="empty-state">
+                            <td colspan="8">
+                                <div class="empty-portfolio">
+                                    <div class="empty-icon">📦</div>
+                                    <h3>No cards in portfolio yet</h3>
+                                    <p>Add some cards to start tracking your Pokemon card investments!</p>
+                                    <button class="btn-primary" onclick="document.getElementById('addCardBtn').click()">Add Your First Card</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Portfolio Analytics -->
+            <div class="portfolio-analytics">
+                <div class="analytics-card">
+                    <h3>Portfolio Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="portfolioChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <h3>Top Performers</h3>
+                    <div id="topPerformers" class="top-performers">
+                        <!-- Will be populated with JavaScript -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -432,6 +499,134 @@
         </div>
     </div>
 
+    <!-- Add Card to Portfolio Modal -->
+    <div id="addCardModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Card to Portfolio</h3>
+                <button class="modal-close" id="closeAddCardModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addCardForm">
+                    <div class="form-group">
+                        <label for="cardSearchInput">Search for Card:</label>
+                        <div class="search-input-group">
+                            <input type="text" id="cardSearchInput" placeholder="Search cards by name..." required>
+                            <button type="button" id="searchCardBtn" class="search-btn">🔍</button>
+                        </div>
+                        <div id="cardSearchResults" class="card-search-results"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="purchasePrice">Purchase Price ($):</label>
+                        <input type="number" id="purchasePrice" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="purchaseDate">Purchase Date:</label>
+                        <input type="date" id="purchaseDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gradingStatus">Grading Status:</label>
+                        <select id="gradingStatus" required>
+                            <option value="ungraded">Ungraded</option>
+                            <option value="psa-1">PSA 1</option>
+                            <option value="psa-2">PSA 2</option>
+                            <option value="psa-3">PSA 3</option>
+                            <option value="psa-4">PSA 4</option>
+                            <option value="psa-5">PSA 5</option>
+                            <option value="psa-6">PSA 6</option>
+                            <option value="psa-7">PSA 7</option>
+                            <option value="psa-8">PSA 8</option>
+                            <option value="psa-9">PSA 9</option>
+                            <option value="psa-10">PSA 10</option>
+                            <option value="bgs-9">BGS 9</option>
+                            <option value="bgs-9.5">BGS 9.5</option>
+                            <option value="bgs-10">BGS 10</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="quantity">Quantity:</label>
+                        <input type="number" id="quantity" min="1" value="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes (optional):</label>
+                        <textarea id="notes" placeholder="Any additional notes about this purchase..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelAddCard">Cancel</button>
+                        <button type="submit" class="btn-primary">Add to Portfolio</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Portfolio Item Modal -->
+    <div id="editPortfolioModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Portfolio Item</h3>
+                <button class="modal-close" id="closeEditModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editPortfolioForm">
+                    <input type="hidden" id="editPortfolioId">
+                    
+                    <div class="form-group">
+                        <label for="editPurchasePrice">Purchase Price ($):</label>
+                        <input type="number" id="editPurchasePrice" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editPurchaseDate">Purchase Date:</label>
+                        <input type="date" id="editPurchaseDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editGradingStatus">Grading Status:</label>
+                        <select id="editGradingStatus" required>
+                            <option value="ungraded">Ungraded</option>
+                            <option value="psa-1">PSA 1</option>
+                            <option value="psa-2">PSA 2</option>
+                            <option value="psa-3">PSA 3</option>
+                            <option value="psa-4">PSA 4</option>
+                            <option value="psa-5">PSA 5</option>
+                            <option value="psa-6">PSA 6</option>
+                            <option value="psa-7">PSA 7</option>
+                            <option value="psa-8">PSA 8</option>
+                            <option value="psa-9">PSA 9</option>
+                            <option value="psa-10">PSA 10</option>
+                            <option value="bgs-9">BGS 9</option>
+                            <option value="bgs-9.5">BGS 9.5</option>
+                            <option value="bgs-10">BGS 10</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editQuantity">Quantity:</label>
+                        <input type="number" id="editQuantity" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editNotes">Notes:</label>
+                        <textarea id="editNotes" placeholder="Any additional notes..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-danger" id="deletePortfolioItem">Delete Item</button>
+                        <button type="button" class="btn-secondary" id="cancelEdit">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner"></div>
@@ -450,6 +645,7 @@
     <!-- Scripts -->
     <script src="supabase-config-prod.js"></script>
     <script src="api-services.js"></script>
+    <script src="portfolio.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

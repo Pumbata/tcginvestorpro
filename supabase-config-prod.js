@@ -213,8 +213,24 @@ const DatabaseHelpers = {
         
         try {
             return await client
-                .from('portfolio_with_roi')
-                .select('*')
+                .from('user_portfolios')
+                .select(`
+                    *,
+                    cards (
+                        id,
+                        name,
+                        set_name,
+                        number,
+                        image_url,
+                        pricing_data (
+                            ungraded_price,
+                            psa_7_price,
+                            psa_8_price,
+                            psa_9_price,
+                            psa_10_price
+                        )
+                    )
+                `)
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
         } catch (error) {
@@ -223,7 +239,7 @@ const DatabaseHelpers = {
         }
     },
     
-    async addToPortfolio(userId, cardId, purchasePrice, purchaseDate, gradingStatus = 'ungraded', notes = '') {
+    async addToPortfolio(userId, cardId, purchasePrice, purchaseDate, gradingStatus = 'ungraded', notes = '', quantity = 1) {
         const client = getSupabaseClient();
         if (!client) return { data: null, error: 'Client not initialized' };
         
@@ -236,6 +252,7 @@ const DatabaseHelpers = {
                     purchase_price: purchasePrice,
                     purchase_date: purchaseDate,
                     grading_status: gradingStatus,
+                    quantity: quantity,
                     notes: notes
                 });
         } catch (error) {
@@ -244,7 +261,7 @@ const DatabaseHelpers = {
         }
     },
     
-    async removeFromPortfolio(userId, cardId) {
+    async removeFromPortfolio(userId, portfolioId) {
         const client = getSupabaseClient();
         if (!client) return { data: null, error: 'Client not initialized' };
         
@@ -253,9 +270,24 @@ const DatabaseHelpers = {
                 .from('user_portfolios')
                 .delete()
                 .eq('user_id', userId)
-                .eq('card_id', cardId);
+                .eq('id', portfolioId);
         } catch (error) {
             console.error('Error removing from portfolio:', error);
+            return { data: null, error: error.message };
+        }
+    },
+    
+    async updatePortfolioItem(portfolioId, updateData) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Client not initialized' };
+        
+        try {
+            return await client
+                .from('user_portfolios')
+                .update(updateData)
+                .eq('id', portfolioId);
+        } catch (error) {
+            console.error('Error updating portfolio item:', error);
             return { data: null, error: error.message };
         }
     },
