@@ -1,10 +1,10 @@
 // TCG Investor Pro - Production Supabase Configuration
 // This version uses environment variables for security
 
-// Supabase configuration with environment variable fallbacks
+// Supabase configuration - direct values for immediate functionality
 const SUPABASE_CONFIG = {
-    url: (window.SUPABASE_URL && window.SUPABASE_URL !== '%%SUPABASE_URL%%') ? window.SUPABASE_URL : 'https://vckwqetuufrcsyuxrxzy.supabase.co',
-    anonKey: (window.SUPABASE_ANON_KEY && window.SUPABASE_ANON_KEY !== '%%SUPABASE_ANON_KEY%%') ? window.SUPABASE_ANON_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZja3dxZXR1dWZyY3N5dXhyeHp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODI3NTUsImV4cCI6MjA3MzQ1ODc1NX0.s-tS9aZtY4tK1x8fznr4nyrX3AI7dTCewALSI7-3cvU'
+    url: 'https://vckwqetuufrcsyuxrxzy.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZja3dxZXR1dWZyY3N5dXhyeHp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODI3NTUsImV4cCI6MjA3MzQ1ODc1NX0.s-tS9aZtY4tK1x8fznr4nyrX3AI7dTCewALSI7-3cvU'
 };
 
 // Initialize Supabase client
@@ -15,32 +15,41 @@ let supabase = null;
  */
 function initializeSupabase(url, anonKey) {
     try {
+        console.log('🔄 Initializing Supabase...', { url, anonKey: anonKey ? 'Present' : 'Missing' });
+        
         // Check if Supabase is already loaded
         if (typeof window.supabase === 'undefined') {
-            console.warn('Supabase client library not loaded. Please include the Supabase script in your HTML.');
+            console.error('❌ Supabase client library not loaded. Please include the Supabase script in your HTML.');
             return null;
         }
 
+        // Use config values if no parameters provided
+        const finalUrl = url || SUPABASE_CONFIG.url;
+        const finalKey = anonKey || SUPABASE_CONFIG.anonKey;
+
         // Validate configuration
-        if (!url || url === 'YOUR_SUPABASE_URL' || url === '%%SUPABASE_URL%%') {
-            console.warn('Supabase URL not configured. Please set SUPABASE_URL environment variable.');
+        if (!finalUrl || finalUrl === 'YOUR_SUPABASE_URL' || finalUrl === '%%SUPABASE_URL%%') {
+            console.error('❌ Supabase URL not configured.');
             return null;
         }
         
-        if (!anonKey || anonKey === 'YOUR_SUPABASE_ANON_KEY' || anonKey === '%%SUPABASE_ANON_KEY%%') {
-            console.warn('Supabase anon key not configured. Please set SUPABASE_ANON_KEY environment variable.');
+        if (!finalKey || finalKey === 'YOUR_SUPABASE_ANON_KEY' || finalKey === '%%SUPABASE_ANON_KEY%%') {
+            console.error('❌ Supabase anon key not configured.');
             return null;
         }
 
+        console.log('✅ Creating Supabase client...');
         // Initialize the client
-        supabase = window.supabase.createClient(url, anonKey);
+        supabase = window.supabase.createClient(finalUrl, finalKey);
+        
+        console.log('✅ Supabase client created successfully');
         
         // Test the connection
         testSupabaseConnection();
         
         return supabase;
     } catch (error) {
-        console.error('Error initializing Supabase:', error);
+        console.error('❌ Error initializing Supabase:', error);
         return null;
     }
 }

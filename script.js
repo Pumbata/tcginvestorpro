@@ -81,31 +81,37 @@ async function initializeApp() {
  */
 async function initializeSupabase() {
     try {
+        console.log('🔄 Starting Supabase initialization...');
+        
+        // Wait a moment for Supabase library to load
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         const { SUPABASE_CONFIG, initializeSupabase } = window.SupabaseConfig;
         
         if (!SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) {
-            console.warn('Supabase configuration missing, using fallback');
+            console.warn('❌ Supabase configuration missing, using fallback');
             return false;
         }
         
+        console.log('✅ Supabase config found, initializing client...');
         const client = initializeSupabase(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
         
         if (!client) {
-            console.warn('Failed to initialize Supabase client');
+            console.warn('❌ Failed to initialize Supabase client');
             return false;
         }
         
         // Test connection
         const isConnected = await window.SupabaseConfig.testSupabaseConnection();
         if (!isConnected) {
-            console.warn('Supabase connection test failed');
+            console.warn('❌ Supabase connection test failed');
             return false;
         }
         
         console.log('✅ Supabase initialized successfully');
         return true;
     } catch (error) {
-        console.warn('Supabase initialization failed:', error);
+        console.warn('❌ Supabase initialization failed:', error);
         return false;
     }
 }
