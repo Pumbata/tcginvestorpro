@@ -14,30 +14,35 @@ let supabase = null;
  * Initialize Supabase client with environment variables
  */
 function initializeSupabase(url, anonKey) {
-    // Check if Supabase is already loaded
-    if (typeof window.supabase === 'undefined') {
-        console.error('Supabase client library not loaded. Please include the Supabase script in your HTML.');
-        return null;
-    }
+    try {
+        // Check if Supabase is already loaded
+        if (typeof window.supabase === 'undefined') {
+            console.warn('Supabase client library not loaded. Please include the Supabase script in your HTML.');
+            return null;
+        }
 
-    // Validate configuration
-    if (!url || url === 'YOUR_SUPABASE_URL') {
-        console.error('Supabase URL not configured. Please set SUPABASE_URL environment variable.');
-        return null;
-    }
-    
-    if (!anonKey || anonKey === 'YOUR_SUPABASE_ANON_KEY') {
-        console.error('Supabase anon key not configured. Please set SUPABASE_ANON_KEY environment variable.');
-        return null;
-    }
+        // Validate configuration
+        if (!url || url === 'YOUR_SUPABASE_URL' || url === '%%SUPABASE_URL%%') {
+            console.warn('Supabase URL not configured. Please set SUPABASE_URL environment variable.');
+            return null;
+        }
+        
+        if (!anonKey || anonKey === 'YOUR_SUPABASE_ANON_KEY' || anonKey === '%%SUPABASE_ANON_KEY%%') {
+            console.warn('Supabase anon key not configured. Please set SUPABASE_ANON_KEY environment variable.');
+            return null;
+        }
 
-    // Initialize the client
-    supabase = window.supabase.createClient(url, anonKey);
-    
-    // Test the connection
-    testSupabaseConnection();
-    
-    return supabase;
+        // Initialize the client
+        supabase = window.supabase.createClient(url, anonKey);
+        
+        // Test the connection
+        testSupabaseConnection();
+        
+        return supabase;
+    } catch (error) {
+        console.error('Error initializing Supabase:', error);
+        return null;
+    }
 }
 
 /**
@@ -68,7 +73,13 @@ async function testSupabaseConnection() {
  */
 function getSupabaseClient() {
     if (!supabase) {
-        console.error('Supabase not initialized. Call initializeSupabase() first.');
+        console.warn('Supabase not initialized. Attempting to initialize...');
+        // Try to initialize with current config
+        const client = initializeSupabase(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+        if (client) {
+            return client;
+        }
+        console.warn('Supabase initialization failed. Using demo mode.');
         return null;
     }
     return supabase;
@@ -347,7 +358,10 @@ const DatabaseHelpers = {
     // Authentication helpers
     async signUp(email, password) {
         const client = getSupabaseClient();
-        if (!client) return { data: null, error: 'Client not initialized' };
+        if (!client) {
+            console.warn('Supabase not available, using demo mode for sign up');
+            return { data: null, error: 'Supabase not available - demo mode' };
+        }
         
         try {
             return await client.auth.signUp({
@@ -362,7 +376,10 @@ const DatabaseHelpers = {
     
     async signIn(email, password) {
         const client = getSupabaseClient();
-        if (!client) return { data: null, error: 'Client not initialized' };
+        if (!client) {
+            console.warn('Supabase not available, using demo mode for sign in');
+            return { data: null, error: 'Supabase not available - demo mode' };
+        }
         
         try {
             return await client.auth.signInWithPassword({

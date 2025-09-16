@@ -968,10 +968,15 @@ function showAuthModal() {
         try {
             if (window.SupabaseConfig?.DatabaseHelpers) {
                 const { error } = await window.SupabaseConfig.DatabaseHelpers.signIn(email, password);
-                if (error) throw error;
+                if (error && error.message !== 'Supabase not available - demo mode') {
+                    throw error;
+                }
                 
+                // If Supabase is not available, fall back to demo mode
                 modal.remove();
-                showNotification('Successfully signed in!', 'success');
+                AppState.currentUser = { id: 'demo-user-' + Date.now(), email: email };
+                updateAuthUI(true);
+                showNotification('Demo mode: Signed in successfully!', 'success');
             } else {
                 // Fallback for demo mode
                 modal.remove();
@@ -993,10 +998,15 @@ function showAuthModal() {
         try {
             if (window.SupabaseConfig?.DatabaseHelpers) {
                 const { error } = await window.SupabaseConfig.DatabaseHelpers.signUp(email, password);
-                if (error) throw error;
+                if (error && error.message !== 'Supabase not available - demo mode') {
+                    throw error;
+                }
                 
+                // If Supabase is not available, fall back to demo mode
                 modal.remove();
-                showNotification('Account created! Please check your email to confirm.', 'success');
+                AppState.currentUser = { id: 'demo-user-' + Date.now(), email: email };
+                updateAuthUI(true);
+                showNotification('Demo mode: Account created successfully!', 'success');
             } else {
                 // Fallback for demo mode
                 modal.remove();
