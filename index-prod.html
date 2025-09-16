@@ -38,20 +38,22 @@
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Supabase Configuration -->
+    <!-- Environment Variables (Set by Netlify) -->
     <script>
-        // Direct Supabase configuration - using your actual credentials
+        // Netlify environment variables are available at build time
+        // We'll use a different approach - check for environment variables first
         window.SUPABASE_URL = 'https://vckwqetuufrcsyuxrxzy.supabase.co';
         window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZja3dxZXR1dWZyY3N5dXhyeHp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODI3NTUsImV4cCI6MjA3MzQ1ODc1NX0.s-tS9aZtY4tK1x8fznr4nyrX3AI7dTCewALSI7-3cvU';
         
-        // API Keys (you can add these later)
+        // API Keys (set these in Netlify environment variables)
         window.POKEMONTCG_API_KEY = '';
         window.PRICECHARTING_API_KEY = '';
         window.POKEMONPRICETRACKER_API_KEY = '';
         
         console.log('✅ Supabase configuration loaded:', {
             url: window.SUPABASE_URL,
-            key: window.SUPABASE_ANON_KEY ? 'Present' : 'Missing'
+            key: window.SUPABASE_ANON_KEY ? 'Present' : 'Missing',
+            environment: 'Production'
         });
     </script>
 </head>

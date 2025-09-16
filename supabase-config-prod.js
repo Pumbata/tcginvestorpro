@@ -1,10 +1,10 @@
 // TCG Investor Pro - Production Supabase Configuration
 // This version uses environment variables for security
 
-// Supabase configuration - direct values for immediate functionality
+// Supabase configuration with environment variable support
 const SUPABASE_CONFIG = {
-    url: 'https://vckwqetuufrcsyuxrxzy.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZja3dxZXR1dWZyY3N5dXhyeHp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODI3NTUsImV4cCI6MjA3MzQ1ODc1NX0.s-tS9aZtY4tK1x8fznr4nyrX3AI7dTCewALSI7-3cvU'
+    url: window.SUPABASE_URL || 'https://vckwqetuufrcsyuxrxzy.supabase.co',
+    anonKey: window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZja3dxZXR1dWZyY3N5dXhyeHp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODI3NTUsImV4cCI6MjA3MzQ1ODc1NX0.s-tS9aZtY4tK1x8fznr4nyrX3AI7dTCewALSI7-3cvU'
 };
 
 // Initialize Supabase client
