@@ -700,6 +700,12 @@ async function loadInitialData() {
         
         if (cardsError) {
             console.error('Error checking existing cards:', cardsError);
+            // If there's a relationship error, the database might be empty
+            if (cardsError.code === 'PGRST200') {
+                console.log('📦 Database appears to be empty, loading mock data...');
+                loadMockData();
+                return;
+            }
             throw cardsError;
         }
         
@@ -707,8 +713,9 @@ async function loadInitialData() {
             console.log('✅ Found existing data in database');
             await loadDataFromDatabase();
         } else {
-            console.log('🔄 No data found, syncing from APIs...');
-            await syncInitialData();
+            console.log('📦 No data found in database');
+            console.log('💡 To populate the database, visit: https://tcginvestorpro.com/admin-populate.html');
+            loadMockData();
         }
         
     } catch (error) {

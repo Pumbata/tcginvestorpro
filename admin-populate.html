@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCG Investor Pro - Database Population</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0A0A0B 0%, #1A1A2E 100%);
+            color: #FFFFFF;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .log-success {
+            background: rgba(34, 197, 94, 0.2);
+            border-left: 3px solid #22c55e;
+        }
+
+        .log-error {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 3px solid #ef4444;
+        }
+
+        .log-info {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 3px solid #3b82f6;
+        }
+
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Database Population Tool</h1>
+        
+        <div class="status">
+            <h3>📊 Current Status</h3>
+            <p>This tool will populate your Supabase database with card and set data from the PokemonTCG.io API.</p>
+            <p><strong>Note:</strong> Make sure you have added your API keys to the user_api_keys table in Supabase.</p>
+        </div>
+
+        <div style="text-align: center;">
+            <button id="populateCards" class="button">📦 Populate Cards & Sets</button>
+            <button id="populatePricing" class="button">💰 Populate Pricing Data</button>
+            <button id="checkStatus" class="button">📈 Check Database Status</button>
+        </div>
+
+        <div class="progress" id="progressContainer" style="display: none;">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="log" id="logContainer">
+            <div class="log-entry log-info">Ready to populate database...</div>
+        </div>
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://vckwqetuufrcsyuxrxzy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZja3dxZXR1dWZyY3N5dXhyeHp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODI3NTUsImV4cCI6MjA3MzQ1ODc1NX0.s-tS9aZtY4tK1x8fznr4nyrX3AI7dTCewALSI7-3cvU';
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function showProgress(show = true) {
+            document.getElementById('progressContainer').style.display = show ? 'block' : 'none';
+        }
+
+        function updateProgress(percent) {
+            document.getElementById('progressBar').style.width = `${percent}%`;
+        }
+
+        async function populateCards() {
+            const button = document.getElementById('populateCards');
+            button.disabled = true;
+            showProgress(true);
+            updateProgress(0);
+
+            try {
+                log('Starting card and set population...', 'info');
+                updateProgress(25);
+
+                const { data, error } = await supabase.functions.invoke('populate-cards');
+
+                if (error) {
+                    throw error;
+                }
+
+                updateProgress(100);
+                log(`Success! Inserted ${data.sets_inserted} sets and ${data.cards_inserted} cards`, 'success');
+                log(data.message, 'success');
+
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                console.error('Error populating cards:', error);
+            } finally {
+                button.disabled = false;
+                showProgress(false);
+            }
+        }
+
+        async function populatePricing() {
+            const button = document.getElementById('populatePricing');
+            button.disabled = true;
+            showProgress(true);
+            updateProgress(0);
+
+            try {
+                log('Starting pricing data population...', 'info');
+                updateProgress(25);
+
+                const { data, error } = await supabase.functions.invoke('populate-pricing');
+
+                if (error) {
+                    throw error;
+                }
+
+                updateProgress(100);
+                log(`Success! Processed ${data.cards_processed} cards and inserted ${data.pricing_inserted} pricing records`, 'success');
+                log(data.message, 'success');
+
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                console.error('Error populating pricing:', error);
+            } finally {
+                button.disabled = false;
+                showProgress(false);
+            }
+        }
+
+        async function checkStatus() {
+            const button = document.getElementById('checkStatus');
+            button.disabled = true;
+
+            try {
+                log('Checking database status...', 'info');
+
+                // Check sets count
+                const { count: setsCount, error: setsError } = await supabase
+                    .from('sets')
+                    .select('*', { count: 'exact', head: true });
+
+                if (setsError) throw setsError;
+
+                // Check cards count
+                const { count: cardsCount, error: cardsError } = await supabase
+                    .from('cards')
+                    .select('*', { count: 'exact', head: true });
+
+                if (cardsError) throw cardsError;
+
+                // Check pricing data count
+                const { count: pricingCount, error: pricingError } = await supabase
+                    .from('pricing_data')
+                    .select('*', { count: 'exact', head: true });
+
+                if (pricingError) throw pricingError;
+
+                log(`Database Status:`, 'info');
+                log(`- Sets: ${setsCount}`, 'info');
+                log(`- Cards: ${cardsCount}`, 'info');
+                log(`- Pricing Records: ${pricingCount}`, 'info');
+
+            } catch (error) {
+                log(`Error checking status: ${error.message}`, 'error');
+                console.error('Error checking status:', error);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('populateCards').addEventListener('click', populateCards);
+        document.getElementById('populatePricing').addEventListener('click', populatePricing);
+        document.getElementById('checkStatus').addEventListener('click', checkStatus);
+
+        // Initial status check
+        checkStatus();
+    </script>
+</body>
+</html>
