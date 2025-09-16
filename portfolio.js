@@ -68,14 +68,25 @@ class PortfolioManager {
     async initializePortfolio() {
         try {
             // Check if user is authenticated
-            const { data: { user } } = await window.SupabaseConfig.getSupabaseClient().auth.getUser();
-            
-            if (user) {
-                PortfolioState.currentUser = user;
-                await this.loadPortfolio();
-                this.updatePortfolioStats();
+            if (window.SupabaseConfig?.getSupabaseClient) {
+                const { data: { user } } = await window.SupabaseConfig.getSupabaseClient().auth.getUser();
+                
+                if (user) {
+                    PortfolioState.currentUser = user;
+                    await this.loadPortfolio();
+                    this.updatePortfolioStats();
+                } else {
+                    this.showLoginPrompt();
+                }
             } else {
-                this.showLoginPrompt();
+                // Demo mode - check AppState for user
+                if (AppState.currentUser) {
+                    PortfolioState.currentUser = AppState.currentUser;
+                    await this.loadPortfolio();
+                    this.updatePortfolioStats();
+                } else {
+                    this.showLoginPrompt();
+                }
             }
         } catch (error) {
             console.error('Error initializing portfolio:', error);
@@ -90,15 +101,21 @@ class PortfolioManager {
         try {
             if (!PortfolioState.currentUser) return;
 
-            const { data, error } = await window.SupabaseConfig.DatabaseHelpers.getUserPortfolio(PortfolioState.currentUser.id);
-            
-            if (error) {
-                console.error('Error loading portfolio:', error);
-                this.showError('Failed to load portfolio');
-                return;
+            if (window.SupabaseConfig?.DatabaseHelpers) {
+                const { data, error } = await window.SupabaseConfig.DatabaseHelpers.getUserPortfolio(PortfolioState.currentUser.id);
+                
+                if (error) {
+                    console.error('Error loading portfolio:', error);
+                    this.showError('Failed to load portfolio');
+                    return;
+                }
+
+                PortfolioState.portfolioItems = data || [];
+            } else {
+                // Demo mode - use empty portfolio
+                PortfolioState.portfolioItems = [];
             }
 
-            PortfolioState.portfolioItems = data || [];
             this.renderPortfolioTable();
             this.updatePortfolioStats();
             PortfolioState.isLoaded = true;
@@ -152,15 +169,47 @@ class PortfolioManager {
         try {
             this.showLoading('cardSearchResults');
             
-            const { data, error } = await window.SupabaseConfig.DatabaseHelpers.searchCards(searchTerm, { limit: 10 });
-            
-            if (error) {
-                console.error('Error searching cards:', error);
-                this.showError('Failed to search cards');
-                return;
-            }
+            if (window.SupabaseConfig?.DatabaseHelpers) {
+                const { data, error } = await window.SupabaseConfig.DatabaseHelpers.searchCards(searchTerm, { limit: 10 });
+                
+                if (error) {
+                    console.error('Error searching cards:', error);
+                    this.showError('Failed to search cards');
+                    return;
+                }
 
-            this.renderCardSearchResults(data || []);
+                this.renderCardSearchResults(data || []);
+            } else {
+                // Demo mode - show sample cards
+                const demoCards = [
+                    {
+                        id: 'demo-charizard',
+                        name: 'Charizard',
+                        set_name: 'Base Set',
+                        number: '4',
+                        image_url: null,
+                        pricing_data: [{ ungraded_price: 150 }]
+                    },
+                    {
+                        id: 'demo-blastoise',
+                        name: 'Blastoise',
+                        set_name: 'Base Set',
+                        number: '2',
+                        image_url: null,
+                        pricing_data: [{ ungraded_price: 80 }]
+                    },
+                    {
+                        id: 'demo-venusaur',
+                        name: 'Venusaur',
+                        set_name: 'Base Set',
+                        number: '15',
+                        image_url: null,
+                        pricing_data: [{ ungraded_price: 60 }]
+                    }
+                ];
+                
+                this.renderCardSearchResults(demoCards);
+            }
         } catch (error) {
             console.error('Error searching cards:', error);
             this.showError('Failed to search cards');
@@ -240,20 +289,42 @@ class PortfolioManager {
                 notes: formData.get('notes') || document.getElementById('notes').value
             };
 
-            // Add to database
-            const { error } = await window.SupabaseConfig.DatabaseHelpers.addToPortfolio(
-                PortfolioState.currentUser.id,
-                portfolioData.cardId,
-                portfolioData.purchasePrice,
-                portfolioData.purchaseDate,
-                portfolioData.gradingStatus,
-                portfolioData.notes
-            );
+            if (window.SupabaseConfig?.DatabaseHelpers) {
+                // Add to database
+                const { error } = await window.SupabaseConfig.DatabaseHelpers.addToPortfolio(
+                    PortfolioState.currentUser.id,
+                    portfolioData.cardId,
+                    portfolioData.purchasePrice,
+                    portfolioData.purchaseDate,
+                    portfolioData.gradingStatus,
+                    portfolioData.notes
+                );
 
-            if (error) {
-                console.error('Error adding to portfolio:', error);
-                this.showError('Failed to add card to portfolio');
-                return;
+                if (error) {
+                    console.error('Error adding to portfolio:', error);
+                    this.showError('Failed to add card to portfolio');
+                    return;
+                }
+            } else {
+                // Demo mode - add to local state
+                const demoItem = {
+                    id: 'demo-' + Date.now(),
+                    card_id: portfolioData.cardId,
+                    purchase_price: portfolioData.purchasePrice,
+                    purchase_date: portfolioData.purchaseDate,
+                    grading_status: portfolioData.gradingStatus,
+                    quantity: portfolioData.quantity,
+                    notes: portfolioData.notes,
+                    cards: {
+                        name: 'Demo Card',
+                        set_name: 'Demo Set',
+                        number: '1',
+                        image_url: null,
+                        pricing_data: [{ ungraded_price: portfolioData.purchasePrice }]
+                    }
+                };
+                
+                PortfolioState.portfolioItems.push(demoItem);
             }
 
             this.showSuccess('Card added to portfolio successfully!');

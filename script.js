@@ -25,8 +25,8 @@ async function initializeApp() {
     console.log('🚀 Initializing TCG Investor Pro...');
     
     try {
-        // Initialize Supabase first
-        await initializeSupabase();
+        // Initialize Supabase first (optional)
+        const supabaseConnected = await initializeSupabase();
         
         // Set up navigation
         setupNavigation();
@@ -49,8 +49,12 @@ async function initializeApp() {
         // Set up authentication
         setupAuthentication();
         
-        // Load real data or fallback to mock data
-        await loadInitialData();
+        // Load data (real or mock)
+        if (supabaseConnected) {
+            await loadInitialData();
+        } else {
+            loadMockData();
+        }
         
         // Render initial dashboard
         renderDashboard();
@@ -70,25 +74,34 @@ async function initializeApp() {
  * Initialize Supabase connection
  */
 async function initializeSupabase() {
-    const { SUPABASE_CONFIG, initializeSupabase } = window.SupabaseConfig;
-    
-    if (!SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) {
-        throw new Error('Supabase configuration missing');
+    try {
+        const { SUPABASE_CONFIG, initializeSupabase } = window.SupabaseConfig;
+        
+        if (!SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) {
+            console.warn('Supabase configuration missing, using fallback');
+            return false;
+        }
+        
+        const client = initializeSupabase(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+        
+        if (!client) {
+            console.warn('Failed to initialize Supabase client');
+            return false;
+        }
+        
+        // Test connection
+        const isConnected = await window.SupabaseConfig.testSupabaseConnection();
+        if (!isConnected) {
+            console.warn('Supabase connection test failed');
+            return false;
+        }
+        
+        console.log('✅ Supabase initialized successfully');
+        return true;
+    } catch (error) {
+        console.warn('Supabase initialization failed:', error);
+        return false;
     }
-    
-    const client = initializeSupabase(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
-    
-    if (!client) {
-        throw new Error('Failed to initialize Supabase client');
-    }
-    
-    // Test connection
-    const isConnected = await window.SupabaseConfig.testSupabaseConnection();
-    if (!isConnected) {
-        throw new Error('Supabase connection test failed');
-    }
-    
-    console.log('✅ Supabase initialized successfully');
 }
 
 /**
@@ -844,17 +857,21 @@ function setupAuthentication() {
     }
     
     // Listen for auth state changes
-    const client = window.SupabaseConfig.getSupabaseClient();
-    if (client) {
-        client.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN') {
-                AppState.currentUser = session.user;
-                updateAuthUI(true);
-            } else if (event === 'SIGNED_OUT') {
-                AppState.currentUser = null;
-                updateAuthUI(false);
-            }
-        });
+    try {
+        const client = window.SupabaseConfig?.getSupabaseClient();
+        if (client) {
+            client.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN') {
+                    AppState.currentUser = session.user;
+                    updateAuthUI(true);
+                } else if (event === 'SIGNED_OUT') {
+                    AppState.currentUser = null;
+                    updateAuthUI(false);
+                }
+            });
+        }
+    } catch (error) {
+        console.warn('Auth state listener setup failed:', error);
     }
 }
 
@@ -929,11 +946,19 @@ function showAuthModal() {
         const password = modal.querySelector('#signinPassword').value;
         
         try {
-            const { error } = await window.SupabaseConfig.DatabaseHelpers.signIn(email, password);
-            if (error) throw error;
-            
-            modal.remove();
-            showNotification('Successfully signed in!', 'success');
+            if (window.SupabaseConfig?.DatabaseHelpers) {
+                const { error } = await window.SupabaseConfig.DatabaseHelpers.signIn(email, password);
+                if (error) throw error;
+                
+                modal.remove();
+                showNotification('Successfully signed in!', 'success');
+            } else {
+                // Fallback for demo mode
+                modal.remove();
+                AppState.currentUser = { id: 'demo-user', email: email };
+                updateAuthUI(true);
+                showNotification('Demo mode: Signed in successfully!', 'success');
+            }
         } catch (error) {
             showNotification('Sign in failed: ' + error.message, 'error');
         }
@@ -945,15 +970,72 @@ function showAuthModal() {
         const password = modal.querySelector('#signupPassword').value;
         
         try {
-            const { error } = await window.SupabaseConfig.DatabaseHelpers.signUp(email, password);
-            if (error) throw error;
-            
-            modal.remove();
-            showNotification('Account created! Please check your email to confirm.', 'success');
+            if (window.SupabaseConfig?.DatabaseHelpers) {
+                const { error } = await window.SupabaseConfig.DatabaseHelpers.signUp(email, password);
+                if (error) throw error;
+                
+                modal.remove();
+                showNotification('Account created! Please check your email to confirm.', 'success');
+            } else {
+                // Fallback for demo mode
+                modal.remove();
+                AppState.currentUser = { id: 'demo-user', email: email };
+                updateAuthUI(true);
+                showNotification('Demo mode: Account created successfully!', 'success');
+            }
         } catch (error) {
             showNotification('Sign up failed: ' + error.message, 'error');
         }
     });
+}
+
+/**
+ * Show notification message
+ */
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Style the notification
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    
+    // Set background color based on type
+    if (type === 'success') {
+        notification.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    } else if (type === 'error') {
+        notification.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+    } else {
+        notification.style.background = 'linear-gradient(135deg, #6366f1, #8b5cf6)';
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 5000);
 }
 
 /**
