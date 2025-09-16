@@ -876,9 +876,23 @@ function setupAuthentication() {
 }
 
 /**
+ * Debug function to check configuration
+ */
+function debugConfiguration() {
+    console.log('🔍 Debug Configuration:');
+    console.log('- SupabaseConfig exists:', !!window.SupabaseConfig);
+    console.log('- SUPABASE_URL:', window.SUPABASE_URL);
+    console.log('- SUPABASE_ANON_KEY:', window.SUPABASE_ANON_KEY ? 'Present' : 'Missing');
+    console.log('- DatabaseHelpers exists:', !!window.SupabaseConfig?.DatabaseHelpers);
+    console.log('- Supabase client exists:', !!window.SupabaseConfig?.getSupabaseClient?.());
+}
+
+/**
  * Show authentication modal
  */
 function showAuthModal() {
+    // Debug configuration when modal opens
+    debugConfiguration();
     // Create a simple auth modal
     const modal = document.createElement('div');
     modal.className = 'modal active';
@@ -955,12 +969,13 @@ function showAuthModal() {
             } else {
                 // Fallback for demo mode
                 modal.remove();
-                AppState.currentUser = { id: 'demo-user', email: email };
+                AppState.currentUser = { id: 'demo-user-' + Date.now(), email: email };
                 updateAuthUI(true);
                 showNotification('Demo mode: Signed in successfully!', 'success');
             }
         } catch (error) {
-            showNotification('Sign in failed: ' + error.message, 'error');
+            console.error('Sign in error:', error);
+            showNotification('Sign in failed: ' + (error.message || 'Unknown error'), 'error');
         }
     });
     
@@ -979,12 +994,13 @@ function showAuthModal() {
             } else {
                 // Fallback for demo mode
                 modal.remove();
-                AppState.currentUser = { id: 'demo-user', email: email };
+                AppState.currentUser = { id: 'demo-user-' + Date.now(), email: email };
                 updateAuthUI(true);
                 showNotification('Demo mode: Account created successfully!', 'success');
             }
         } catch (error) {
-            showNotification('Sign up failed: ' + error.message, 'error');
+            console.error('Sign up error:', error);
+            showNotification('Sign up failed: ' + (error.message || 'Unknown error'), 'error');
         }
     });
 }
