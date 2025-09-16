@@ -26,7 +26,13 @@ async function initializeApp() {
     
     try {
         // Initialize Supabase first (optional)
-        const supabaseConnected = await initializeSupabase();
+        let supabaseConnected = false;
+        try {
+            supabaseConnected = await initializeSupabase();
+        } catch (error) {
+            console.warn('Supabase initialization failed, using demo mode:', error);
+            supabaseConnected = false;
+        }
         
         // Set up navigation
         setupNavigation();

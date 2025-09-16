@@ -69,28 +69,41 @@ class PortfolioManager {
         try {
             // Check if user is authenticated
             if (window.SupabaseConfig?.getSupabaseClient) {
-                const { data: { user } } = await window.SupabaseConfig.getSupabaseClient().auth.getUser();
-                
-                if (user) {
-                    PortfolioState.currentUser = user;
-                    await this.loadPortfolio();
-                    this.updatePortfolioStats();
+                const client = window.SupabaseConfig.getSupabaseClient();
+                if (client) {
+                    const { data: { user } } = await client.auth.getUser();
+                    
+                    if (user) {
+                        PortfolioState.currentUser = user;
+                        await this.loadPortfolio();
+                        this.updatePortfolioStats();
+                    } else {
+                        this.showLoginPrompt();
+                    }
                 } else {
-                    this.showLoginPrompt();
+                    // Supabase client not available, use demo mode
+                    this.initializeDemoMode();
                 }
             } else {
                 // Demo mode - check AppState for user
-                if (AppState.currentUser) {
-                    PortfolioState.currentUser = AppState.currentUser;
-                    await this.loadPortfolio();
-                    this.updatePortfolioStats();
-                } else {
-                    this.showLoginPrompt();
-                }
+                this.initializeDemoMode();
             }
         } catch (error) {
             console.error('Error initializing portfolio:', error);
-            this.showError('Failed to initialize portfolio');
+            this.initializeDemoMode();
+        }
+    }
+
+    /**
+     * Initialize demo mode
+     */
+    initializeDemoMode() {
+        if (AppState.currentUser) {
+            PortfolioState.currentUser = AppState.currentUser;
+            this.loadPortfolio();
+            this.updatePortfolioStats();
+        } else {
+            this.showLoginPrompt();
         }
     }
 

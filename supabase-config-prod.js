@@ -3,8 +3,8 @@
 
 // Supabase configuration with environment variable fallbacks
 const SUPABASE_CONFIG = {
-    url: window.SUPABASE_URL || process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL',
-    anonKey: window.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY'
+    url: (window.SUPABASE_URL && window.SUPABASE_URL !== '%%SUPABASE_URL%%') ? window.SUPABASE_URL : 'https://vckwqetuufrcsyuxrxzy.supabase.co',
+    anonKey: (window.SUPABASE_ANON_KEY && window.SUPABASE_ANON_KEY !== '%%SUPABASE_ANON_KEY%%') ? window.SUPABASE_ANON_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZja3dxZXR1dWZyY3N5dXhyeHp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODI3NTUsImV4cCI6MjA3MzQ1ODc1NX0.s-tS9aZtY4tK1x8fznr4nyrX3AI7dTCewALSI7-3cvU'
 };
 
 // Initialize Supabase client
