@@ -67,7 +67,6 @@ serve(async (req) => {
       total: set.total,
       release_date: set.releaseDate,
       legal_standard: set.legalities?.standard || 'unknown',
-      legal_expanded: set.legalities?.expanded || 'unknown',
       symbol_url: set.images?.symbol,
       logo_url: set.images?.logo,
       created_at: new Date().toISOString(),
@@ -111,7 +110,6 @@ serve(async (req) => {
       tcgplayer_id: card.tcgplayer?.id || null,
       cardmarket_id: card.cardmarket?.id || null,
       legal_standard: card.legalities?.standard || 'unknown',
-      legal_expanded: card.legalities?.expanded || 'unknown',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }))
